@@ -10,10 +10,27 @@ class ArticleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $articles = Article::latest()->paginate(10);
-        return view('articles.index', compact('articles'));
+        $q = $request->query('q');
+
+        $articles = Article::when($q, function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('title', 'like', "%{$q}%")
+                        ->orWhere('excerpt', 'like', "%{$q}%")
+                        ->orWhere('content', 'like', "%{$q}%");
+                });
+            })
+            ->latest()
+            ->paginate(10);
+
+        // Pertahankan query string (mis. ?q=...) saat pindah halaman
+        $articles->appends($request->query());
+
+        return view('articles.index', [
+            'articles' => $articles,
+            'q' => $q,
+        ]);
     }
 
     /**

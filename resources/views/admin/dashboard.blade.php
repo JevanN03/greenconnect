@@ -18,6 +18,21 @@
   </div>
 </div>
 
+<div class="card mt-3">
+  <div class="card-body">
+    <h5 class="card-title">Grafik Laporan (Mingguan)</h5>
+    <div id="chartWeekly" style="height: 320px;"></div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-body">
+    <h5 class="card-title">Grafik Laporan (Bulanan)</h5>
+    <div id="chartMonthly" style="height: 320px;"></div>
+  </div>
+</div>
+
+
 @push('scripts')
 <!-- ApexCharts (SVG, bukan canvas) -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -34,5 +49,31 @@
   };
   new ApexCharts(document.querySelector("#chartDaily"), options).render();
 </script>
+
+<script>
+  // Data dari controller
+  const weekly = @json($weekly);
+  const monthly = @json($monthly);
+
+  // Weekly
+  const wkCategories = weekly.map(i => i.week_start);
+  const wkSeries = weekly.map(i => i.c);
+  new ApexCharts(document.querySelector("#chartWeekly"), {
+    chart: { type: 'bar', height: 320 },
+    series: [{ name:'Laporan/Minggu', data: wkSeries }],
+    xaxis: { categories: wkCategories }
+  }).render();
+
+  // Monthly
+  const moCategories = monthly.map(i => i.ym);
+  const moSeries = monthly.map(i => i.c);
+  new ApexCharts(document.querySelector("#chartMonthly"), {
+    chart: { type: 'area', height: 320 },
+    series: [{ name:'Laporan/Bulan', data: moSeries }],
+    xaxis: { categories: moCategories },
+    stroke: { width: 3 }
+  }).render();
+</script>
+
 @endpush
 @endsection

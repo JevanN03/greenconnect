@@ -7,6 +7,8 @@ use App\Http\Controllers\CollectionPointController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ArticleAdminController;
+use App\Http\Controllers\Admin\CollectionPointAdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +56,9 @@ Route::prefix('admin')->middleware(['auth','admin'])->group(function () {
 
     // Admin tanggapi diskusi (anggap reply juga)
     Route::post('/discussions/{discussion}/reply', [DashboardController::class, 'adminReply'])->name('admin.discussions.reply');
+
+    Route::resource('articles', ArticleAdminController::class)->except(['show']);
+    Route::resource('collection-points', CollectionPointAdminController::class)->except(['show']);
 });
 
 require __DIR__.'/auth.php';

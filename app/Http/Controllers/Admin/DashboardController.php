@@ -8,6 +8,7 @@ use App\Models\Report;
 use App\Models\Discussion;
 use App\Models\DiscussionReply;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -22,12 +23,23 @@ class DashboardController extends Controller
             'replies' => DiscussionReply::count(),
         ];
 
-        // contoh agregasi harian 7 hari terakhir (detail chart nanti)
-        $daily = Report::select(DB::raw('DATE(created_at) as d'), DB::raw('count(*) as c'))
-            ->where('created_at','>=', now()->subDays(6)->startOfDay())
-            ->groupBy('d')->orderBy('d')->get();
+        // HARIAN: 7 hari terakhir
+        $daily = Report::select(
+            DB::raw('DATE(created_at) as d'),
+            DB::raw('COUNT(*) as c'))->where('created_at','>=', now()->subDays(6)->startOfDay())->groupBy('d')->orderBy('d')->get();
 
-        return view('admin.dashboard', compact('counts','daily'));
+        // MINGGUAN: 8 minggu terakhir (YearWeek untuk akurasi lintas tahun)
+        $weekly = Report::select(
+            DB::raw("YEARWEEK(created_at, 3) as yw"), // mode ISO week, 3=Monday-first
+            DB::raw("DATE_FORMAT(DATE_SUB(DATE(created_at), INTERVAL (WEEKDAY(created_at)) DAY),'%Y-%m-%d') as week_start"),
+            DB::raw('COUNT(*) as c'))->where('created_at','>=', now()->startOfWeek()->subWeeks(7))->groupBy('yw','week_start')->orderBy('week_start')->get();
+
+        // BULANAN: 12 bulan terakhir
+        $monthly = Report::select(
+            DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym"),
+            DB::raw('COUNT(*) as c'))->where('created_at','>=', now()->startOfMonth()->subMonths(11))->groupBy('ym')->orderBy('ym')->get();
+
+        return view('admin.dashboard', compact('counts','daily','weekly','monthly'));
     }
 
     // CRUD laporan

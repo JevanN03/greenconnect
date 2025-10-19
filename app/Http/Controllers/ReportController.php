@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Report;
+use App\Http\Requests\StoreReportRequest;
 use Illuminate\Support\Facades\Storage;
 
 class ReportController extends Controller
@@ -12,12 +13,8 @@ class ReportController extends Controller
         return view('reports.create');
     }
 
-    public function store(Request $r) {
-        $data = $r->validate([
-            'title' => 'required|string|max:150',
-            'description' => 'required|string',
-            'photo' => 'nullable|image|max:2048'
-        ]);
+    public function store(StoreReportRequest $r) {
+        $data = $r->validated();
 
         $path = null;
         if ($r->hasFile('photo')) {
@@ -37,6 +34,8 @@ class ReportController extends Controller
 
     public function check() {
         $myReports = Report::where('user_id', auth()->id())->latest()->paginate(10);
+        // authorize tidak perlu per item karena sudah difilter by user_id
         return view('reports.check', compact('myReports'));
     }
+
 }

@@ -10,10 +10,26 @@ class CollectionPointController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $points = CollectionPoint::orderBy('name')->get();
-        return view('collection_points.index', compact('points'));
+        $q = $request->query('q');
+
+        $points = CollectionPoint::when($q, function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('name', 'like', "%{$q}%")
+                        ->orWhere('address', 'like', "%{$q}%");
+                });
+            })
+            ->orderBy('name')
+            ->paginate(15);
+
+        // Pertahankan ?q= saat pindah halaman (hindari warning IDE)
+        $points->appends($request->query());
+
+        return view('collection_points.index', [
+            'points' => $points,
+            'q'      => $q,
+        ]);
     }
 
     /**
