@@ -76,4 +76,26 @@ class DashboardController extends Controller
         ]);
         return back()->with('success','Admin menanggapi diskusi.');
     }
+
+    public function adminDiscussions(Request $request){
+        $q = $request->query('q');
+
+        $discussions = Discussion::with(['user', 'replies.user'])
+            ->when($q, function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('title', 'like', "%{$q}%")
+                        ->orWhere('body', 'like', "%{$q}%");
+                });
+            })
+            ->latest()
+            ->paginate(20);
+
+        // Pertahankan query string saat pindah halaman (hindari warning IDE)
+        $discussions->appends($request->query());
+
+        return view('admin.discussions.index', [
+            'discussions' => $discussions,
+            'q'           => $q,
+        ]);
+    }
 }

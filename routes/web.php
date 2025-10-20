@@ -1,11 +1,14 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+
+// Public/User controllers
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CollectionPointController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\ReportController;
+
+// Admin controllers
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ArticleAdminController;
 use App\Http\Controllers\Admin\CollectionPointAdminController;
@@ -14,26 +17,42 @@ use App\Http\Controllers\Admin\CollectionPointAdminController;
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
+| Aturan akses:
+| - Guest (belum login): Beranda, Artikel (list & detail), TPA/TPS (list).
+|   Link Diskusi & Pelaporan tetap terlihat di navbar, tapi saat di-klik
+|   akan diarahkan ke /login karena kedua fitur itu dilindungi middleware 'auth'.
 |
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
+| - User (sudah login): Bisa akses semua (Beranda, Artikel, TPA/TPS, Diskusi,
+|   Pelaporan, Cek Laporan).
+|
+| - Admin (sudah login & is_admin): Akses halaman kelola (artikel, TPA/TPS,
+|   diskusi, laporan) dan dashboard grafik.
+|
+| Pastikan 'require __DIR__/auth.php' di bagian bawah agar route login/register aktif.
 |
 */
 
-Route::view('/', 'welcome-landing')->name('landing'); // Halaman beranda untuk tamu & user
+// ---------------------------- GUEST (Publik) ----------------------------
 
-// Guest-access (tanpa login):
+// Beranda (guest dan user akan melihat halaman yang sama, tapi route name berbeda untuk state)
+Route::view('/', 'welcome-landing')->name('landing');
+
+// Artikel - publik
 Route::get('/articles', [ArticleController::class, 'index'])->name('articles.index');
 Route::get('/articles/{article}', [ArticleController::class, 'show'])->name('articles.show');
-Route::get('/collection-points', [CollectionPointController::class, 'index'])->name('collection-points.index');
 
-// Auth required (user):
+// TPA/TPS - publik
+Route::get('/collection-points', [CollectionPointController::class, 'index'])
+    ->name('collection-points.index');
+
+
+// ---------------------------- USER (Login diperlukan) ----------------------------
 Route::middleware(['auth'])->group(function () {
-    // halaman beranda setelah login (tetap pakai landing dengan CTA berbeda)
-    Route::get('/home', fn() => view('welcome-landing'))->name('home');
 
-    // Diskusi (flat)
+    // Beranda setelah login (tetap gunakan view landing agar konsisten UI)
+    Route::get('/home', fn () => view('welcome-landing'))->name('home');
+
+    // Diskusi (flat thread)
     Route::get('/discussions', [DiscussionController::class, 'index'])->name('discussions.index');
     Route::post('/discussions', [DiscussionController::class, 'store'])->name('discussions.store');
     Route::post('/discussions/{discussion}/reply', [DiscussionController::class, 'reply'])->name('discussions.reply');
@@ -41,24 +60,33 @@ Route::middleware(['auth'])->group(function () {
     // Pelaporan
     Route::get('/reports/create', [ReportController::class, 'create'])->name('reports.create');
     Route::post('/reports', [ReportController::class, 'store'])->name('reports.store');
-    Route::get('/reports/check', [ReportController::class, 'check'])->name('reports.check'); // cek status milik user
+    Route::get('/reports/check', [ReportController::class, 'check'])->name('reports.check');
 });
 
-// Admin
-Route::prefix('admin')->middleware(['auth','admin'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
-    // CRUD laporan untuk admin
-    Route::get('/reports', [DashboardController::class, 'reports'])->name('admin.reports');
-    Route::get('/reports/{report}/edit', [DashboardController::class, 'editReport'])->name('admin.reports.edit');
-    Route::put('/reports/{report}', [DashboardController::class, 'updateReport'])->name('admin.reports.update');
-    Route::delete('/reports/{report}', [DashboardController::class, 'destroyReport'])->name('admin.reports.destroy');
+// ---------------------------- ADMIN (Login + Admin) ----------------------------
+Route::prefix('admin')->middleware(['auth', 'admin'])->as('admin.')->group(function () {
 
-    // Admin tanggapi diskusi (anggap reply juga)
-    Route::post('/discussions/{discussion}/reply', [DashboardController::class, 'adminReply'])->name('admin.discussions.reply');
+    // Dashboard - Lihat Grafik
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Kelola Laporan (CRUD dasar di DashboardController)
+    Route::get('/reports', [DashboardController::class, 'reports'])->name('reports');
+    Route::get('/reports/{report}/edit', [DashboardController::class, 'editReport'])->name('reports.edit');
+    Route::put('/reports/{report}', [DashboardController::class, 'updateReport'])->name('reports.update');
+    Route::delete('/reports/{report}', [DashboardController::class, 'destroyReport'])->name('reports.destroy');
+
+    // Kelola Artikel (resource, tanpa show)
     Route::resource('articles', ArticleAdminController::class)->except(['show']);
+
+    // Kelola TPA/TPS (resource, tanpa show)
     Route::resource('collection-points', CollectionPointAdminController::class)->except(['show']);
+
+    // Kelola Diskusi (list semua & balas sebagai admin)
+    Route::get('/discussions', [DashboardController::class, 'adminDiscussions'])->name('discussions.index');
+    Route::post('/discussions/{discussion}/reply', [DashboardController::class, 'adminReply'])->name('discussions.reply');
 });
 
-require __DIR__.'/auth.php';
+
+// ---------------------------- AUTH ROUTES (Login/Register) ----------------------------
+require __DIR__ . '/auth.php';
