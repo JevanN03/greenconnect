@@ -70,21 +70,22 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->as('admin.')->group(funct
     // Dashboard - Lihat Grafik
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Kelola Laporan (CRUD dasar di DashboardController)
+    // Kelola Laporan
     Route::get('/reports', [DashboardController::class, 'reports'])->name('reports');
     Route::get('/reports/{report}/edit', [DashboardController::class, 'editReport'])->name('reports.edit');
     Route::put('/reports/{report}', [DashboardController::class, 'updateReport'])->name('reports.update');
     Route::delete('/reports/{report}', [DashboardController::class, 'destroyReport'])->name('reports.destroy');
 
-    // Kelola Artikel (resource, tanpa show)
+    // Kelola Artikel (resource, tanpa show) -> nama route: admin.articles.*
     Route::resource('articles', ArticleAdminController::class)->except(['show']);
 
-    // Kelola TPA/TPS (resource, tanpa show)
+    // Kelola TPA/TPS (resource, tanpa show) -> nama route: admin.collection-points.*
     Route::resource('collection-points', CollectionPointAdminController::class)->except(['show']);
 
-    // Kelola Diskusi (list semua & balas sebagai admin)
+    // Kelola Diskusi
     Route::get('/discussions', [DashboardController::class, 'adminDiscussions'])->name('discussions.index');
     Route::post('/discussions/{discussion}/reply', [DashboardController::class, 'adminReply'])->name('discussions.reply');
+    Route::delete('/discussions/{discussion}', [DashboardController::class, 'destroyDiscussion'])->name('discussions.destroy'); // <-- TAMBAHAN
 });
 
 

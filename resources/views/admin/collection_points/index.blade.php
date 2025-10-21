@@ -2,7 +2,7 @@
 @section('content')
 <h3 class="mb-3">Kelola TPA/TPS</h3>
 
-<form class="row g-2 mb-3">
+<form class="row g-2 mb-3" method="GET" action="{{ route('admin.collection-points.index') }}">
   <div class="col-auto">
     <input type="text" name="q" class="form-control" placeholder="Cari nama/alamat..." value="{{ request('q') }}">
   </div>
@@ -10,7 +10,7 @@
     <button class="btn btn-outline-secondary">Cari</button>
   </div>
   <div class="col-auto ms-auto">
-    <a class="btn btn-success" href="{{ route('collection-points.create') }}">Tambah</a>
+    <a class="btn btn-success" href="{{ route('admin.collection-points.create') }}">Tambah</a>
   </div>
 </form>
 
@@ -24,8 +24,8 @@
       <td>{{ $p->address }}</td>
       <td>@if($p->map_link)<a href="{{ $p->map_link }}" target="_blank">Lihat</a>@else - @endif</td>
       <td>
-        <a class="btn btn-sm btn-primary" href="{{ route('collection-points.edit',$p) }}">Edit</a>
-        <form action="{{ route('collection-points.destroy',$p) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus data?')">
+        <a class="btn btn-sm btn-primary" href="{{ route('admin.collection-points.edit',$p) }}">Edit</a>
+        <form action="{{ route('admin.collection-points.destroy',$p) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus data?')">
           @csrf @method('DELETE')
           <button class="btn btn-sm btn-danger">Hapus</button>
         </form>

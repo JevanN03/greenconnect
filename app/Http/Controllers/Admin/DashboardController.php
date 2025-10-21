@@ -98,4 +98,10 @@ class DashboardController extends Controller
             'q'           => $q,
         ]);
     }
+
+    public function destroyDiscussion(Discussion $discussion){
+        // Hapus diskusi; balasan akan ikut terhapus jika FK di migrations sudah cascadeOnDelete
+        $discussion->delete();
+        return back()->with('success', 'Diskusi dihapus.');
+    }
 }

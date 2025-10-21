@@ -8,24 +8,16 @@ use Illuminate\Http\Request;
 
 class ArticleAdminController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index() {
         $q = request('q');
         $articles = Article::when($q, fn($w)=>$w->where('title','like',"%$q%"))
             ->latest()->paginate(10);
-        return view('admin.articles.index', compact('articles'));
+        $articles->appends(request()->query());
+        return view('admin.articles.index', compact('articles', 'q'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create() { return view('admin.articles.create'); }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $r) {
         $data = $r->validate([
             'title'=>'required|max:150',
@@ -34,25 +26,13 @@ class ArticleAdminController extends Controller
         ]);
         $data['user_id'] = auth()->id();
         Article::create($data);
-        return redirect()->route('articles.index')->with('success','Artikel dibuat.');
+        return redirect()->route('admin.articles.index')->with('success','Artikel dibuat.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Article $article)
-    {
-        //
+    public function edit(Article $article) {
+        return view('admin.articles.edit', compact('article'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Article $article) { return view('admin.articles.edit', compact('article')); }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $r, Article $article) {
         $data = $r->validate([
             'title'=>'required|max:150',
@@ -60,12 +40,9 @@ class ArticleAdminController extends Controller
             'content'=>'required|string',
         ]);
         $article->update($data);
-        return redirect()->route('articles.index')->with('success','Artikel diperbarui.');
+        return redirect()->route('admin.articles.index')->with('success','Artikel diperbarui.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Article $article) {
         $article->delete();
         return back()->with('success','Artikel dihapus.');
