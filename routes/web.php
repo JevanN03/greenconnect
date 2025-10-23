@@ -7,6 +7,7 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CollectionPointController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\HomeController;
 
 // Admin controllers
 use App\Http\Controllers\Admin\DashboardController;
@@ -35,7 +36,7 @@ use App\Http\Controllers\Admin\CollectionPointAdminController;
 // ---------------------------- GUEST (Publik) ----------------------------
 
 // Beranda (guest dan user akan melihat halaman yang sama, tapi route name berbeda untuk state)
-Route::view('/', 'welcome-landing')->name('landing');
+Route::get('/', [HomeController::class, 'index'])->name('landing');
 
 // Artikel - publik
 Route::get('/articles', [ArticleController::class, 'index'])->name('articles.index');
@@ -50,7 +51,7 @@ Route::get('/collection-points', [CollectionPointController::class, 'index'])
 Route::middleware(['auth'])->group(function () {
 
     // Beranda setelah login (tetap gunakan view landing agar konsisten UI)
-    Route::get('/home', fn () => view('welcome-landing'))->name('home');
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     // Diskusi (flat thread)
     Route::get('/discussions', [DiscussionController::class, 'index'])->name('discussions.index');

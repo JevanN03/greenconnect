@@ -6,18 +6,24 @@
 
   <title>{{ config('app.name','GreenConnect') }}</title>
 
-  <!-- Bootstrap CSS via CDN -->
+  <!-- Bootstrap CSS -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
     crossorigin="anonymous"
-  >
+  />
 
-  <!-- Vite (JS/CSS app) -->
+  <!-- Bootstrap Icons (untuk ikon kecil di beberapa section) -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+    rel="stylesheet"
+  />
+
+  <!-- Vite -->
   @vite(['resources/js/app.js'])
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
   <nav class="navbar navbar-expand-lg navbar-dark bg-success">
     <div class="container">
       <a class="navbar-brand fw-bold" href="{{ route('landing') }}">GreenConnect</a>
@@ -27,75 +33,65 @@
       </button>
 
       <div class="collapse navbar-collapse" id="mainNav">
-        {{-- ========== MENU KIRI ========== --}}
+        {{-- ================= MENU KIRI ================= --}}
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-
           @if(auth()->check() && auth()->user()->is_admin)
             {{-- ===== NAVBAR ADMIN ===== --}}
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('admin.articles.*') ? 'active' : '' }}"
-                href="{{ route('admin.articles.index') }}">Kelola Artikel</a>
+                 href="{{ route('admin.articles.index') }}">Kelola Artikel</a>
             </li>
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('admin.collection-points.*') ? 'active' : '' }}"
-                href="{{ route('admin.collection-points.index') }}">Kelola TPA/TPS</a>
+                 href="{{ route('admin.collection-points.index') }}">Kelola TPA/TPS</a>
             </li>
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('admin.discussions.*') ? 'active' : '' }}"
-                href="{{ route('admin.discussions.index') }}">Kelola Diskusi</a>
+                 href="{{ route('admin.discussions.index') }}">Kelola Diskusi</a>
             </li>
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}"
-                href="{{ route('admin.reports') }}">Kelola Laporan</a>
+                 href="{{ route('admin.reports') }}">Kelola Laporan</a>
             </li>
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
-                href="{{ route('admin.dashboard') }}">Lihat Grafik</a>
+                 href="{{ route('admin.dashboard') }}">Lihat Grafik</a>
             </li>
-
           @else
             {{-- ===== NAVBAR PUBLIK / USER ===== --}}
             <li class="nav-item">
               <a
                 class="nav-link {{ request()->routeIs('landing') || request()->routeIs('home') ? 'active' : '' }}"
                 href="{{ auth()->check() ? route('home') : route('landing') }}"
-              >
-                Beranda
-              </a>
+              >Beranda</a>
             </li>
-
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('articles.*') ? 'active' : '' }}"
-                href="{{ route('articles.index') }}">Artikel</a>
+                 href="{{ route('articles.index') }}">Artikel</a>
             </li>
-
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('collection-points.*') ? 'active' : '' }}"
-                href="{{ route('collection-points.index') }}">TPA/TPS</a>
+                 href="{{ route('collection-points.index') }}">TPA/TPS</a>
             </li>
-
-            {{-- Link Diskusi & Pelaporan selalu terlihat.
-                Jika guest menekan, akan diarahkan ke /login (karena route dilindungi auth). --}}
+            {{-- Tampilkan link Diskusi & Pelaporan juga ke guest; akan diarahkan ke /login oleh middleware auth --}}
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('discussions.*') ? 'active' : '' }}"
-                href="{{ route('discussions.index') }}">Diskusi</a>
+                 href="{{ route('discussions.index') }}">Diskusi</a>
             </li>
-
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('reports.create') ? 'active' : '' }}"
-                href="{{ route('reports.create') }}">Pelaporan</a>
+                 href="{{ route('reports.create') }}">Pelaporan</a>
             </li>
-
             @auth
               <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('reports.check') ? 'active' : '' }}"
-                  href="{{ route('reports.check') }}">Cek Laporan</a>
+                   href="{{ route('reports.check') }}">Cek Laporan</a>
               </li>
             @endauth
           @endif
         </ul>
 
-        {{-- ========== MENU KANAN (AUTH) ========== --}}
+        {{-- ================= MENU KANAN ================= --}}
         <ul class="navbar-nav ms-auto">
           @guest
             <li class="nav-item"><a class="nav-link" href="{{ route('login') }}">Masuk</a></li>
@@ -118,7 +114,8 @@
     </div>
   </nav>
 
-  <main class="py-4">
+  {{-- ================= KONTEN UTAMA ================= --}}
+  <main class="flex-fill py-4">
     <div class="container">
       @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -138,16 +135,28 @@
     </div>
   </main>
 
-  <footer class="bg-light border-top py-3 mt-5">
-    <div class="container text-center small text-muted">
-      &copy; {{ date('Y') }} GreenConnect — Edukasi & Aksi Pengelolaan Sampah
+  {{-- ================= FOOTER (sticky, tidak menutupi konten) ================= --}}
+  <footer class="bg-light border-top py-3">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center small">
+      <div class="text-muted">
+        &copy; {{ date('Y') }} GreenConnect — Edukasi & Aksi Pengelolaan Sampah
+      </div>
+      <ul class="nav">
+        <li class="nav-item"><a class="nav-link px-2" href="#">Tentang</a></li>
+        <li class="nav-item"><a class="nav-link px-2" href="#">Kontak</a></li>
+        <li class="nav-item"><a class="nav-link px-2" href="#">Kebijakan Privasi</a></li>
+        <li class="nav-item"><a class="nav-link px-2" href="#">Syarat Layanan</a></li>
+        <li class="nav-item"><a class="nav-link px-2" href="#">Media Sosial</a></li>
+      </ul>
     </div>
   </footer>
 
   <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-          crossorigin="anonymous"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"
+  ></script>
 
   @stack('scripts')
 </body>
