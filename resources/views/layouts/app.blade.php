@@ -26,7 +26,18 @@
 <body class="d-flex flex-column min-vh-100">
   <nav class="navbar navbar-expand-lg navbar-dark bg-success">
     <div class="container">
-      <a class="navbar-brand fw-bold" href="{{ route('landing') }}">GreenConnect</a>
+      @php
+            $brandUrl = route('landing');                   // default untuk guest
+            if (auth()->check()) {
+                $brandUrl = auth()->user()->is_admin
+                    ? route('admin.articles.index')         // admin -> Kelola Artikel
+                    : route('home');                        // user biasa -> beranda user
+            }
+        @endphp
+        <a class="navbar-brand fw-bold" href="{{ $brandUrl }}">GreenConnect</a>
+
+
+
 
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
         <span class="navbar-toggler-icon"></span>
@@ -39,23 +50,23 @@
             {{-- ===== NAVBAR ADMIN ===== --}}
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('admin.articles.*') ? 'active' : '' }}"
-                 href="{{ route('admin.articles.index') }}">Kelola Artikel</a>
+                href="{{ route('admin.articles.index') }}">Kelola Artikel</a>
             </li>
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('admin.collection-points.*') ? 'active' : '' }}"
-                 href="{{ route('admin.collection-points.index') }}">Kelola TPA/TPS</a>
+                href="{{ route('admin.collection-points.index') }}">Kelola TPA/TPS</a>
             </li>
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('admin.discussions.*') ? 'active' : '' }}"
-                 href="{{ route('admin.discussions.index') }}">Kelola Diskusi</a>
+                href="{{ route('admin.discussions.index') }}">Kelola Diskusi</a>
             </li>
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}"
-                 href="{{ route('admin.reports') }}">Kelola Laporan</a>
+                href="{{ route('admin.reports') }}">Kelola Laporan</a>
             </li>
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
-                 href="{{ route('admin.dashboard') }}">Lihat Grafik</a>
+                href="{{ route('admin.dashboard') }}">Lihat Grafik</a>
             </li>
           @else
             {{-- ===== NAVBAR PUBLIK / USER ===== --}}
@@ -67,49 +78,49 @@
             </li>
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('articles.*') ? 'active' : '' }}"
-                 href="{{ route('articles.index') }}">Artikel</a>
+                href="{{ route('articles.index') }}">Artikel</a>
             </li>
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('collection-points.*') ? 'active' : '' }}"
-                 href="{{ route('collection-points.index') }}">TPA/TPS</a>
+                href="{{ route('collection-points.index') }}">TPA/TPS</a>
             </li>
             {{-- Tampilkan link Diskusi & Pelaporan juga ke guest; akan diarahkan ke /login oleh middleware auth --}}
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('discussions.*') ? 'active' : '' }}"
-                 href="{{ route('discussions.index') }}">Diskusi</a>
+                href="{{ route('discussions.index') }}">Diskusi</a>
             </li>
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('reports.create') ? 'active' : '' }}"
-                 href="{{ route('reports.create') }}">Pelaporan</a>
+                href="{{ route('reports.create') }}">Pelaporan</a>
             </li>
             @auth
               <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('reports.check') ? 'active' : '' }}"
-                   href="{{ route('reports.check') }}">Cek Laporan</a>
+                  href="{{ route('reports.check') }}">Cek Laporan</a>
               </li>
             @endauth
           @endif
         </ul>
 
-        {{-- ================= MENU KANAN ================= --}}
-        <ul class="navbar-nav ms-auto">
+        {{-- ================= MENU KANAN (BUTTONS) ================= --}}
+        <div class="ms-auto d-flex align-items-center gap-2">
           @guest
-            <li class="nav-item"><a class="nav-link" href="{{ route('login') }}">Masuk</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ route('register') }}">Daftar</a></li>
+            <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm" aria-label="Masuk">
+              Masuk
+            </a>
+            <a href="{{ route('register') }}" class="btn btn-light btn-sm text-success fw-semibold" aria-label="Daftar">
+              Daftar
+            </a>
           @else
-            <li class="nav-item">
-              <span class="navbar-text me-3">
-                Halo, {{ auth()->user()->is_admin ? 'Admin' : auth()->user()->name }}
-              </span>
-            </li>
-            <li class="nav-item">
-              <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button class="btn btn-outline-light btn-sm">Logout</button>
-              </form>
-            </li>
+            <span class="navbar-text me-2 d-none d-md-inline">
+              Halo, {{ auth()->user()->is_admin ? 'Admin' : auth()->user()->name }}
+            </span>
+            <form method="POST" action="{{ route('logout') }}" class="mb-0">
+              @csrf
+              <button class="btn btn-outline-light btn-sm" aria-label="Logout">Logout</button>
+            </form>
           @endguest
-        </ul>
+        </div>
       </div>
     </div>
   </nav>

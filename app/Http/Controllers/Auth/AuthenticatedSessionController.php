@@ -23,14 +23,19 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
-    {
+    public function store(LoginRequest $request){
         $request->authenticate();
-
         $request->session()->regenerate();
 
+        // Admin langsung ke Kelola Artikel
+        if (auth()->user()->is_admin) {
+            return redirect()->route('admin.articles.index');
+        }
+
+        // User biasa ke HOME (/home), bukan /dashboard
         return redirect()->intended(RouteServiceProvider::HOME);
     }
+
 
     /**
      * Destroy an authenticated session.

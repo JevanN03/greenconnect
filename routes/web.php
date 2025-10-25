@@ -64,6 +64,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reports/check', [ReportController::class, 'check'])->name('reports.check');
 });
 
+// Dashboard bawaan Breeze -> arahkan ke halaman yang benar
+Route::middleware('auth')->get('/dashboard', function () {
+    return auth()->user()->is_admin
+        ? redirect()->route('admin.articles.index')
+        : redirect()->route('home');
+})->name('dashboard');
+
 
 // ---------------------------- ADMIN (Login + Admin) ----------------------------
 Route::prefix('admin')->middleware(['auth', 'admin'])->as('admin.')->group(function () {
