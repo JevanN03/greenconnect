@@ -8,45 +8,66 @@ use Illuminate\Http\Request;
 
 class CollectionPointAdminController extends Controller
 {
-    public function index() {
-        $q = request('q');
-        $points = CollectionPoint::when($q, fn($w)=>$w->where('name','like',"%$q%")
-            ->orWhere('address','like',"%$q%"))
-            ->orderBy('name')->paginate(15);
-        $points->appends(request()->query());
-        return view('admin.collection_points.index', compact('points','q'));
+    public function index(Request $request)
+    {
+        $q = $request->query('q');
+
+        $points = CollectionPoint::when($q, function ($w) use ($q) {
+                $w->where('name', 'like', "%{$q}%")
+                ->orWhere('address', 'like', "%{$q}%");
+            })
+            ->latest()
+            ->paginate(12);
+
+        $points->appends($request->query());
+
+        return view('admin.collection_points.index', compact('points'));
     }
 
     public function create() { return view('admin.collection_points.create'); }
 
-    public function store(Request $r) {
-        $data = $r->validate([
-            'name'=>'required|max:150',
-            'contact'=>'nullable|string|max:100',
-            'address'=>'required|string',
-            'map_link'=>'nullable|url'
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name'    => 'required|string|max:150',
+            'address' => 'required|string|max:255',
+            'contact' => 'nullable|string|max:100',
+            'map_url' => 'nullable|string|max:500',
         ]);
+
         CollectionPoint::create($data);
-        return redirect()->route('admin.collection-points.index')->with('success','TPA/TPS ditambahkan.');
+
+        return redirect()
+            ->route('admin.collection-points.index')
+            ->with('success', 'TPA/TPS berhasil ditambahkan.');
     }
 
     public function edit(CollectionPoint $collection_point) {
         return view('admin.collection_points.edit', ['point'=>$collection_point]);
     }
 
-    public function update(Request $r, CollectionPoint $collection_point) {
-        $data = $r->validate([
-            'name'=>'required|max:150',
-            'contact'=>'nullable|string|max:100',
-            'address'=>'required|string',
-            'map_link'=>'nullable|url'
+    public function update(Request $request, CollectionPoint $collectionPoint)
+    {
+        $data = $request->validate([
+            'name'    => 'required|string|max:150',
+            'address' => 'required|string|max:255',
+            'contact' => 'nullable|string|max:100',
+            'map_url' => 'nullable|string|max:500',
         ]);
-        $collection_point->update($data);
-        return redirect()->route('admin.collection-points.index')->with('success','TPA/TPS diperbarui.');
+
+        $collectionPoint->update($data);
+
+        return redirect()
+            ->route('admin.collection-points.index')
+            ->with('success', 'TPA/TPS berhasil diperbarui.');
     }
 
-    public function destroy(CollectionPoint $collection_point) {
-        $collection_point->delete();
-        return back()->with('success','TPA/TPS dihapus.');
+    public function destroy(CollectionPoint $collectionPoint)
+    {
+        $collectionPoint->delete();
+
+        return redirect()
+            ->route('admin.collection-points.index')
+            ->with('success', 'TPA/TPS berhasil dihapus.');
     }
 }

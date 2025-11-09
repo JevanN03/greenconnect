@@ -22,6 +22,8 @@
 
   <!-- Vite -->
   @vite(['resources/js/app.js'])
+
+  @stack('styles')
 </head>
 <body class="d-flex flex-column min-vh-100">
   <nav class="navbar navbar-expand-lg navbar-dark bg-success">
@@ -126,25 +128,22 @@
   </nav>
 
   {{-- ================= KONTEN UTAMA ================= --}}
-  <main class="flex-fill py-4">
-    <div class="container">
+<main class="py-4">
+  <div class="container">
+
+    {{-- Flash global (bisa dipadamkan dari view dengan $suppressFlash = true) --}}
+    @unless(isset($suppressFlash) && $suppressFlash)
       @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
       @endif
-
-      @if($errors->any())
-        <div class="alert alert-danger">
-          <ul class="mb-0">
-            @foreach($errors->all() as $e)
-              <li>{{ $e }}</li>
-            @endforeach
-          </ul>
-        </div>
+      @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
       @endif
+    @endunless
 
-      @yield('content')
-    </div>
-  </main>
+    @yield('content')
+  </div>
+</main>
 
   {{-- ================= FOOTER (sticky, tidak menutupi konten) ================= --}}
   <footer class="bg-light border-top py-3">

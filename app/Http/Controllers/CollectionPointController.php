@@ -14,22 +14,16 @@ class CollectionPointController extends Controller
     {
         $q = $request->query('q');
 
-        $points = CollectionPoint::when($q, function ($query) use ($q) {
-                $query->where(function ($sub) use ($q) {
-                    $sub->where('name', 'like', "%{$q}%")
-                        ->orWhere('address', 'like', "%{$q}%");
-                });
+        $points = CollectionPoint::when($q, function ($w) use ($q) {
+                $w->where('name', 'like', "%{$q}%")
+                ->orWhere('address', 'like', "%{$q}%");
             })
-            ->orderBy('name')
-            ->paginate(15);
+            ->latest()
+            ->paginate(8);
 
-        // Pertahankan ?q= saat pindah halaman (hindari warning IDE)
         $points->appends($request->query());
 
-        return view('collection_points.index', [
-            'points' => $points,
-            'q'      => $q,
-        ]);
+        return view('collection_points.index', compact('points'));
     }
 
     /**
@@ -53,7 +47,7 @@ class CollectionPointController extends Controller
      */
     public function show(CollectionPoint $collectionPoint)
     {
-        //
+        return view('collection_points.show', ['point' => $collectionPoint]);
     }
 
     /**
