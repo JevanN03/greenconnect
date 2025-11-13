@@ -3,34 +3,41 @@
 @section('content')
 <h3 class="mb-3">Tambah TPA/TPS</h3>
 
-<form method="POST" action="{{ route('admin.collection-points.store') }}" class="border p-3 p-md-4 rounded shadow-sm">
+<form method="POST" action="{{ route('admin.collection-points.store') }}" 
+      class="border p-3 p-md-4 rounded shadow-sm js-confirm-save"
+      data-title="Simpan TPA/TPS?" data-text="Pastikan link peta dan alamat sudah benar.">
   @csrf
 
-  <div class="mb-3">
-    <label class="form-label">Nama</label>
-    <input name="name" class="form-control" value="{{ old('name') }}" required>
+<div class="mb-3">
+    <label class="form-label">Nama <span class="text-danger">*</span></label>
+    <input name="name" id="cp-name" class="form-control" value="{{ old('name') }}" required>
+    @error('name') <div class="text-danger small">{{ $message }}</div> @enderror
   </div>
 
   <div class="mb-3">
     <label class="form-label">Alamat</label>
-    <textarea name="address" class="form-control" rows="2" required>{{ old('address') }}</textarea>
+    <textarea name="address" id="cp-address" class="form-control" rows="2">{{ old('address') }}</textarea>
+    @error('address') <div class="text-danger small">{{ $message }}</div> @enderror
   </div>
 
   <div class="mb-3">
     <label class="form-label">Kontak</label>
     <input name="contact" class="form-control" value="{{ old('contact') }}">
+    @error('contact') <div class="text-danger small">{{ $message }}</div> @enderror
   </div>
 
   <div class="mb-2">
-    <label class="form-label">Link Peta (Google Maps)</label>
-    <input name="map_url" id="map_url" class="form-control" value="{{ old('map_url') }}"
-          placeholder="Tempel link Google Maps (Share → Copy link)">
-    <div class="form-text">Contoh: https://goo.gl/maps/... atau https://maps.google.com/?q=...</div>
+    <label class="form-label">Link/Koordinat Google Maps (opsional)</label>
+    <input name="map_url" id="cp-mapurl" class="form-control" value="{{ old('map_url') }}"
+          placeholder="Tempel link Google Maps (Share → Copy link) / atau koordinat lat,lng">
+    <div class="form-text">Jika kosong, pratinjau peta akan memakai <strong>Nama</strong>.</div>
+    @error('map_url') <div class="text-danger small">{{ $message }}</div> @enderror
   </div>
 
   <div class="mb-3">
+    <label class="form-label">Preview Peta</label>
     <div class="ratio ratio-16x9 border rounded">
-      <iframe id="map_iframe" src="" style="border:0" loading="lazy"></iframe>
+      <iframe id="cp-iframe" src="" style="border:0" loading="lazy"></iframe>
     </div>
   </div>
 
@@ -43,59 +50,59 @@
 
 @push('scripts')
 <script>
-  const input  = document.getElementById('map_url');
-  const iframe = document.getElementById('map_iframe');
+  // refs
+  const $name   = document.getElementById('cp-name');
+  const $mapUrl = document.getElementById('cp-mapurl');
+  const $addr   = document.getElementById('cp-address');
+  const $iframe = document.getElementById('cp-iframe');
 
+  // ekstrak koordinat dari berbagai pola url/teks
   function parseCoords(s) {
     if (!s) return null;
-    // @lat,lng
-    let m = s.match(/@\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+    let m = s.match(/@\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);             // @lat,lng
     if (m) return [parseFloat(m[1]), parseFloat(m[2])];
-    // !3dLAT!4dLNG
-    m = s.match(/!3d\s*(-?\d+\.\d+)\s*!4d\s*(-?\d+\.\d+)/);
+    m = s.match(/!3d\s*(-?\d+\.\d+)\s*!4d\s*(-?\d+\.\d+)/);             // !3dLAT!4dLNG
     if (m) return [parseFloat(m[1]), parseFloat(m[2])];
-    // q=lat,lng
-    m = s.match(/[?&]q=\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+    m = s.match(/[?&]q=\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);            // q=lat,lng
     if (m) return [parseFloat(m[1]), parseFloat(m[2])];
-    // plain "lat,lng"
-    m = s.match(/^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/);
+    m = s.match(/^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/);             // plain "lat,lng"
     if (m) return [parseFloat(m[1]), parseFloat(m[2])];
     return null;
   }
 
-  function toEmbed(url, fallbackAddress = '') {
-    if (url) {
-      const coords = parseCoords(url);
-      if (coords) {
-        return `https://www.google.com/maps?q=${coords[0]},${coords[1]}&z=16&output=embed`;
-      }
-      if (url.includes('output=embed') || url.includes('/embed')) return url;
-      // kalau shortlink tanpa koordinat, pakai alamat sebagai fallback
-      if (fallbackAddress) {
-        return 'https://www.google.com/maps?q=' + encodeURIComponent(fallbackAddress) + '&z=16&output=embed';
-      }
-      return 'https://www.google.com/maps?q=' + encodeURIComponent(url) + '&output=embed';
+  // bangun url embed: koordinat (dari map_url) → Nama → map_url → Alamat
+  function buildEmbedUrl(name, mapUrl, address) {
+    const has = v => v && String(v).trim().length > 0;
+
+    if (has(mapUrl)) {
+      const coords = parseCoords(mapUrl);
+      if (coords) return `https://www.google.com/maps?q=${coords[0]},${coords[1]}&z=16&output=embed`;
     }
-    if (fallbackAddress) {
-      return 'https://www.google.com/maps?q=' + encodeURIComponent(fallbackAddress) + '&z=16&output=embed';
+    if (has(name))   return 'https://www.google.com/maps?q=' + encodeURIComponent(name) + '&z=16&output=embed';
+    if (has(mapUrl)) {
+      if (mapUrl.includes('output=embed') || mapUrl.includes('/embed')) return mapUrl;
+      return 'https://www.google.com/maps?q=' + encodeURIComponent(mapUrl) + '&z=16&output=embed';
     }
+    if (has(address)) return 'https://www.google.com/maps?q=' + encodeURIComponent(address) + '&z=16&output=embed';
     return '';
   }
 
-  function refresh() {
-    const addrInput = document.querySelector('textarea[name="address"], input[name="address"]');
-    const address   = addrInput ? addrInput.value.trim() : '';
-    iframe.src = toEmbed(input.value.trim(), address);
+  function updatePreview() {
+    if (!$iframe) return;
+    const src = buildEmbedUrl(
+      $name   ? $name.value   : '',
+      $mapUrl ? $mapUrl.value : '',
+      $addr   ? $addr.value   : ''
+    );
+    $iframe.src = src || 'about:blank';
   }
 
-  if (input && iframe) {
-    input.addEventListener('input', refresh);
-    const addr = document.querySelector('textarea[name="address"], input[name="address"]');
-    if (addr) addr.addEventListener('input', refresh);
-    // render awal
-    refresh();
-  }
+  // debounce agar tidak terlalu sering reload iframe
+  let t; const deb = fn => { clearTimeout(t); t = setTimeout(fn, 250); };
+
+  [$name, $mapUrl, $addr].forEach(el => el && el.addEventListener('input', () => deb(updatePreview)));
+
+  // render awal (pakai old() jika ada)
+  updatePreview();
 </script>
 @endpush
-
-

@@ -3,7 +3,9 @@
 @section('content')
 <h3 class="mb-3">Edit TPA/TPS</h3>
 
-<form method="POST" action="{{ route('admin.collection-points.update', $point) }}" class="border p-3 p-md-4 rounded shadow-sm">
+<form method="POST" action="{{ route('admin.collection-points.update', $point) }}" 
+      class="border p-3 p-md-4 rounded shadow-sm js-confirm-save"
+      data-title="Simpan TPA/TPS?" data-text="Pastikan link peta dan alamat sudah benar.">
   @csrf
   @method('PUT')
 
@@ -23,13 +25,17 @@
   </div>
 
   <div class="mb-2">
-    <label class="form-label">Link Peta Google Maps (Share -> Copy Link)</label>
-    <input name="map_url" id="map_url" class="form-control" value="{{ old('map_url', $point->map_url) }}">
+    <label class="form-label">Link/Koordinat Google Maps (opsional)</label>
+    <input name="map_url" id="cp-mapurl" class="form-control" value="{{ old('map_url', $point->map_url) }}">
+    <div class="form-text">
+      Boleh diisi koordinat <code>lat,lng</code> atau link Google Maps. Jika kosong, pratinjau akan memakai <strong>Nama</strong>.
+    </div>
   </div>
 
   <div class="mb-3">
+    <label class="form-label">Preview Peta</label>
     <div class="ratio ratio-16x9 border rounded">
-      <iframe id="map_iframe" src="{{ $point->map_embed_url }}" style="border:0" loading="lazy"></iframe>
+      <iframe id="cp-iframe" src="{{ $point->map_embed_url }}" style="border:0" loading="lazy"></iframe>
     </div>
   </div>
 
@@ -62,38 +68,37 @@
     return null;
   }
 
-  function toEmbed(url, fallbackAddress = '') {
-    if (url) {
-      const coords = parseCoords(url);
-      if (coords) {
-        return `https://www.google.com/maps?q=${coords[0]},${coords[1]}&z=16&output=embed`;
-      }
-      if (url.includes('output=embed') || url.includes('/embed')) return url;
-      // kalau shortlink tanpa koordinat, pakai alamat sebagai fallback
-      if (fallbackAddress) {
-        return 'https://www.google.com/maps?q=' + encodeURIComponent(fallbackAddress) + '&z=16&output=embed';
-      }
-      return 'https://www.google.com/maps?q=' + encodeURIComponent(url) + '&output=embed';
+// Bangun URL embed: koordinat (paling akurat) → Nama → map_url → alamat
+  function buildEmbedUrl(name, mapUrl, address) {
+    const has = v => v && String(v).trim().length > 0;
+
+    if (has(mapUrl)) {
+      const coords = parseCoords(mapUrl);
+      if (coords) return `https://www.google.com/maps?q=${coords[0]},${coords[1]}&z=16&output=embed`;
     }
-    if (fallbackAddress) {
-      return 'https://www.google.com/maps?q=' + encodeURIComponent(fallbackAddress) + '&z=16&output=embed';
+    if (has(name))   return 'https://www.google.com/maps?q=' + encodeURIComponent(name) + '&z=16&output=embed';
+    if (has(mapUrl)) {
+      if (mapUrl.includes('output=embed') || mapUrl.includes('/embed')) return mapUrl;
+      return 'https://www.google.com/maps?q=' + encodeURIComponent(mapUrl) + '&z=16&output=embed';
     }
+    if (has(address)) return 'https://www.google.com/maps?q=' + encodeURIComponent(address) + '&z=16&output=embed';
     return '';
   }
 
-  function refresh() {
-    const addrInput = document.querySelector('textarea[name="address"], input[name="address"]');
-    const address   = addrInput ? addrInput.value.trim() : '';
-    iframe.src = toEmbed(input.value.trim(), address);
+  function updatePreview() {
+    if (!$iframe) return;
+    const name   = $name   ? $name.value   : '';
+    const mapUrl = $mapUrl ? $mapUrl.value : '';
+    const addr   = $addr   ? $addr.value   : '';
+    const src = buildEmbedUrl(name, mapUrl, addr);
+    $iframe.src = src || 'about:blank';
   }
 
-  if (input && iframe) {
-    input.addEventListener('input', refresh);
-    const addr = document.querySelector('textarea[name="address"], input[name="address"]');
-    if (addr) addr.addEventListener('input', refresh);
-    // render awal
-    refresh();
-  }
+  let t; const deb = fn => { clearTimeout(t); t = setTimeout(fn, 250); };
+
+  [$name, $mapUrl, $addr].forEach(el => el && el.addEventListener('input', () => deb(updatePreview)));
+
+  updatePreview();
 </script>
 @endpush
 

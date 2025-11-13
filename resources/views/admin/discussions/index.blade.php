@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@php($suppressFlash = true)
 @section('content')
   <h3 class="mb-3">Kelola Diskusi</h3>
 
@@ -29,9 +30,15 @@
           </div>
 
           {{-- Hapus Diskusi --}}
-          <form method="POST" action="{{ route('admin.discussions.destroy', $d) }}" onsubmit="return confirm('Hapus diskusi beserta semua balasannya?')">
+          <form method="POST" action="{{ route('admin.discussions.destroy', $d) }}" class="d-inline">
             @csrf @method('DELETE')
-            <button class="btn btn-sm btn-danger">Hapus</button>
+            <button type="submit"
+                    class="btn btn-danger btn-sm js-confirm-delete"
+                    data-title="Hapus diskusi?"
+                    data-text="Seluruh balasan di thread ini juga akan terhapus."
+                    data-confirm="Ya, hapus">
+              Hapus
+            </button>
           </form>
         </div>
 
@@ -69,3 +76,10 @@
     <div class="alert alert-info">Belum ada diskusi.</div>
   @endif
 @endsection
+
+@push('scripts')
+  <script>
+    @if(session('success')) flashToast('success', @json(session('success'))); @endif
+    @if(session('error'))   flashToast('error',   @json(session('error')));   @endif
+  </script>
+@endpush

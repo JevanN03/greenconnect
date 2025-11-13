@@ -7,8 +7,9 @@
       novalidate
       method="POST"
       action="{{ route('admin.articles.store') }}"
-      class="border p-3 p-md-4 rounded shadow-sm"
-      enctype="multipart/form-data">
+      enctype="multipart/form-data"
+      class="border p-3 p-md-4 rounded shadow-sm js-confirm-save"
+      data-title="Simpan artikel?" data-text="Konten akan dipublikasikan.">
   @csrf
 
   {{-- Judul --}}

@@ -1,27 +1,28 @@
 @extends('layouts.app')
-
-{{-- Matikan flash global dari layout --}}
 @php($suppressFlash = true)
 
 @section('content')
+@push('styles')
+<style>
+  .btn-admin-col{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:.5rem;
+  }
+</style>
+@endpush
+
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h3 class="mb-0">Kelola TPA/TPS</h3>
-    <a href="{{ route('admin.collection-points.create') }}" class="btn btn-success">Tambah</a>
   </div>
 
-  {{-- Flash KHUSUS halaman ini (ditaruh di bawah H1 + tombol Tambah) --}}
-  @if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-  @endif
-  @if(session('error'))
-    <div class="alert alert-danger">{{ session('error') }}</div>
-  @endif
-
-  {{-- Pencarian --}}
-  <form class="row g-2 mb-3" method="GET" action="{{ route('admin.collection-points.index') }}">
-    <div class="col-sm-8 col-md-6">
-      <input type="text" name="q" class="form-control" placeholder="Cari nama/alamat..."
-            value="{{ request('q') }}">
+{{-- Pencarian --}}
+  <form class="row g-2 align-items-center mb-3" method="GET"
+        action="{{ route('admin.collection-points.index') }}">
+    <div class="col-12 col-md-6">
+      <input type="text" name="q" class="form-control"
+            placeholder="Cari nama/alamat..." value="{{ request('q') }}">
     </div>
     <div class="col-auto">
       <button class="btn btn-outline-secondary">Cari</button>
@@ -31,6 +32,9 @@
         <a class="btn btn-outline-danger" href="{{ route('admin.collection-points.index') }}">Reset</a>
       </div>
     @endif
+    <div class="col-auto ms-auto">
+      <a href="{{ route('admin.collection-points.create') }}" class="btn btn-success">Tambah</a>
+    </div>
   </form>
 
   <div class="table-responsive">
@@ -41,7 +45,7 @@
           <th>Nama</th>
           <th>Alamat</th>
           <th>Kontak</th>
-          <th class="text-end">Aksi</th>
+          <th class="text-end th-actions pe-0">Aksi</th>
         </tr>
       </thead>
       <tbody>
@@ -61,19 +65,17 @@
             <td class="fw-semibold">{{ $p->name }}</td>
             <td>{{ \Illuminate\Support\Str::limit($p->address, 80) }}</td>
             <td>{{ $p->contact }}</td>
-            <td class="text-end">
-              <div class="d-inline-flex gap-2 justify-content-end flex-wrap">
+            <td class="td-actions text-end pe-0">
+              <div class="btn-admin-col">
                 <a href="{{ route('admin.collection-points.edit', $p) }}"
-                   class="btn btn-primary rounded-3 px-4"
-                   style="min-width:110px">
-                  Edit
-                </a>
-                <form method="POST" action="{{ route('admin.collection-points.destroy', $p) }}"
-                      class="d-inline" onsubmit="return confirm('Hapus data ini?')">
+                  class="btn btn-primary">Edit</a>
+                <form method="POST" action="{{ route('admin.collection-points.destroy', $p) }}">
                   @csrf @method('DELETE')
                   <button type="submit"
-                          class="btn btn-danger rounded-3 px-4"
-                          style="min-width:110px">
+                          class="btn btn-danger js-confirm-delete"
+                          data-title="Hapus TPA/TPS?"
+                          data-text="Data lokasi akan dihapus."
+                          data-confirm="Ya, hapus">
                     Hapus
                   </button>
                 </form>
@@ -93,3 +95,10 @@
     {{ $points->links() }}
   </div>
 @endsection
+
+@push('scripts')
+  <script>
+    @if(session('success')) flashToast('success', @json(session('success'))); @endif
+    @if(session('error'))   flashToast('error',   @json(session('error')));   @endif
+  </script>
+@endpush

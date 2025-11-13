@@ -14,6 +14,10 @@
     crossorigin="anonymous"
   />
 
+  <style>
+    th.th-actions, td.td-actions { width: 240px; }
+  </style>
+
   <!-- Bootstrap Icons (untuk ikon kecil di beberapa section) -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
@@ -37,10 +41,6 @@
             }
         @endphp
         <a class="navbar-brand fw-bold" href="{{ $brandUrl }}">GreenConnect</a>
-
-
-
-
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -64,7 +64,7 @@
             </li>
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}"
-                href="{{ route('admin.reports') }}">Kelola Laporan</a>
+                href="{{ route('admin.reports.index') }}">Kelola Laporan</a>
             </li>
             <li class="nav-item">
               <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
@@ -128,7 +128,7 @@
   </nav>
 
   {{-- ================= KONTEN UTAMA ================= --}}
-<main class="py-4">
+<main class="py-4 flex-fill">
   <div class="container">
 
     {{-- Flash global (bisa dipadamkan dari view dengan $suppressFlash = true) --}}
@@ -146,7 +146,7 @@
 </main>
 
   {{-- ================= FOOTER (sticky, tidak menutupi konten) ================= --}}
-  <footer class="bg-light border-top py-3">
+  <footer class="bg-light border-top py-3 mt-auto">
     <div class="container d-flex flex-wrap justify-content-between align-items-center small">
       <div class="text-muted">
         &copy; {{ date('Y') }} GreenConnect — Edukasi & Aksi Pengelolaan Sampah
@@ -167,6 +167,72 @@
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
     crossorigin="anonymous"
   ></script>
+
+  {{-- SweetAlert2 --}}
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    // Toast helper
+    window.flashToast = (type = 'success', message = '') => {
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2500,
+        timerProgressBar: true
+      });
+      Toast.fire({ icon: type, title: message });
+    };
+
+    // Tampilkan toast dari flash session (kecuali halaman mematikan flash)
+    @unless(isset($suppressFlash) && $suppressFlash)
+      @if(session('success'))
+        flashToast('success', @json(session('success')));
+      @endif
+      @if(session('error'))
+        flashToast('error', @json(session('error')));
+      @endif
+    @endunless
+
+    // Konfirmasi HAPUS (button di dalam form)
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('.js-confirm-delete');
+      if (!btn) return;
+      const form = btn.closest('form');
+      if (!form) return;
+
+      e.preventDefault();
+      Swal.fire({
+        title: btn.dataset.title || 'Hapus data ini?',
+        text: btn.dataset.text || 'Tindakan ini tidak bisa dibatalkan.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: btn.dataset.confirm || 'Ya, hapus',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#dc3545'
+      }).then((res) => {
+        if (res.isConfirmed) form.submit();
+      });
+    });
+
+    // Konfirmasi SIMPAN (form submit untuk tambah/edit)
+    document.addEventListener('submit', function (e) {
+      const form = e.target;
+      if (!form.classList.contains('js-confirm-save')) return;
+
+      e.preventDefault();
+      Swal.fire({
+        title: form.dataset.title || 'Simpan perubahan?',
+        text: form.dataset.text || 'Pastikan data sudah benar.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: form.dataset.confirm || 'Simpan',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#198754'
+      }).then((res) => {
+        if (res.isConfirmed) form.submit();
+      });
+    });
+  </script>
 
   @stack('scripts')
 </body>

@@ -7,8 +7,9 @@
       novalidate
       method="POST"
       action="{{ route('admin.articles.update', $article) }}"
-      class="border p-3 p-md-4 rounded shadow-sm"
-      enctype="multipart/form-data">
+      enctype="multipart/form-data"
+      class="border p-3 p-md-4 rounded shadow-sm js-confirm-save"
+      data-title="Simpan artikel?" data-text="Konten akan dipublikasikan.">
   @csrf
   @method('PUT')
 
@@ -29,8 +30,13 @@
 
   {{-- Konten (TinyMCE) --}}
   <div class="mb-3">
-    <label class="form-label">Konten (Rich Text)</label>
-    <textarea id="editor" name="content" class="form-control" rows="14">{{ old('content') }}</textarea>
+        <label for="content" class="form-label">Konten (Rich Text)</label>
+    <textarea id="content" name="content" class="form-control" rows="14">
+    {!! old('content', $article->content) !!}
+    </textarea>
+    @error('content')
+      <div class="text-danger small">{{ $message }}</div>
+    @enderror
   </div>
 
   {{-- Gambar Sampul --}}
@@ -73,7 +79,7 @@
         if (!window.tinymce) { console.error('TinyMCE gagal dimuat.'); return; }
 
         tinymce.init({
-          selector: '#editor',
+          selector: '#content',
           menubar: false,
           branding: false,
           height: 500,

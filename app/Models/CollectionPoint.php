@@ -37,30 +37,57 @@ class CollectionPoint extends Model
         return null;
     }
 
-    // --- Accessor: $point->map_embed_url untuk <iframe>
+// --- Accessor: $point->map_embed_url untuk <iframe>
     public function getMapEmbedUrlAttribute(): ?string
     {
-        // 1) Coba ambil koordinat dari map_url
+        // 1) Jika ada koordinat eksplisit di map_url, itu paling akurat
         if ($coords = $this->extractCoords($this->map_url)) {
             [$lat, $lng] = $coords;
             return "https://www.google.com/maps?q={$lat},{$lng}&z=16&output=embed";
         }
 
-        // 2) Kalau tidak ada koordinat, coba dari address (biasanya lebih bisa di-geocode)
-        if ($this->address) {
-            return 'https://www.google.com/maps?q=' . urlencode($this->address) . '&z=16&output=embed';
+        // 2) UTAMAKAN NAMA LOKASI untuk geocoding (sesuai permintaan)
+        if ($name = trim((string)$this->name)) {
+            return 'https://www.google.com/maps?q=' . urlencode($name) . '&z=16&output=embed';
         }
 
-        // 3) Fallback terakhir: pakai map_url apa adanya (kalau sudah /embed atau output=embed)
+        // 3) Kalau ada map_url tapi bukan embed, jadikan query
         if ($this->map_url) {
             if (str_contains($this->map_url, 'output=embed') || str_contains($this->map_url, '/embed')) {
                 return $this->map_url;
             }
-            // upaya terakhir: jadikan query
-            return 'https://www.google.com/maps?q=' . urlencode($this->map_url) . '&output=embed';
+            return 'https://www.google.com/maps?q=' . urlencode($this->map_url) . '&z=16&output=embed';
+        }
+
+        // 4) Fallback terakhir: alamat teks
+        if ($this->address) {
+            return 'https://www.google.com/maps?q=' . urlencode($this->address) . '&z=16&output=embed';
         }
 
         // Tidak ada apapun
+        return null;
+    }
+
+    // --- Accessor: $point->map_open_url untuk tombol "Buka di Google Maps"
+    public function getMapOpenUrlAttribute(): ?string
+    {
+        if ($coords = $this->extractCoords($this->map_url)) {
+            [$lat, $lng] = $coords;
+            return "https://www.google.com/maps/search/?api=1&query={$lat},{$lng}";
+        }
+
+        if ($name = trim((string)$this->name)) {
+            return 'https://www.google.com/maps/search/?api=1&query=' . urlencode($name);
+        }
+
+        if ($this->map_url) {
+            return 'https://www.google.com/maps/search/?api=1&query=' . urlencode($this->map_url);
+        }
+
+        if ($this->address) {
+            return 'https://www.google.com/maps/search/?api=1&query=' . urlencode($this->address);
+        }
+
         return null;
     }
 }

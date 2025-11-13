@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@php($suppressFlash = true)
 @section('content')
 <h3 class="mb-3">Kelola Artikel</h3>
 
@@ -14,19 +15,34 @@
   </div>
 </form>
 
-<table class="table table-hover">
-  <thead><tr><th>Judul</th><th>Dibuat</th><th>Aksi</th></tr></thead>
+<table class="table align-middle">
+  <thead>
+    <tr>
+      <th>Judul</th>
+      <th>Dibuat</th>
+      <th class="text-start th-actions">Aksi</th>
+    </tr>
+  </thead>
   <tbody>
   @foreach($articles as $a)
     <tr>
       <td>{{ $a->title }}</td>
       <td>{{ $a->created_at->format('d M Y') }}</td>
-      <td>
-        <a class="btn btn-sm btn-primary" href="{{ route('admin.articles.edit',$a) }}">Edit</a>
-        <form action="{{ route('admin.articles.destroy',$a) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus artikel?')">
-          @csrf @method('DELETE')
-          <button class="btn btn-sm btn-danger">Hapus</button>
-        </form>
+      <td class="td-actions">
+        <div class="d-inline-flex align-items-center gap-2">
+          <a href="{{ route('admin.articles.edit', $a) }}"
+            class="btn btn-primary">Edit</a>
+          <form method="POST" action="{{ route('admin.articles.destroy', $a) }}">
+            @csrf @method('DELETE')
+            <button type="submit"
+                    class="btn btn-danger js-confirm-delete"
+                    data-title="Hapus artikel?"
+                    data-text="Artikel akan dihapus permanen."
+                    data-confirm="Ya, hapus">
+              Hapus
+            </button>
+          </form>
+        </div>
       </td>
     </tr>
   @endforeach
@@ -34,3 +50,10 @@
 </table>
 {{ $articles->links() }}
 @endsection
+
+@push('scripts')
+  <script>
+    @if(session('success')) flashToast('success', @json(session('success'))); @endif
+    @if(session('error'))   flashToast('error',   @json(session('error')));   @endif
+  </script>
+@endpush

@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@php($suppressFlash = true)
 @section('content')
 <h2 class="mb-3">Status Laporan Saya</h2>
 <table class="table align-middle">
@@ -25,3 +26,10 @@
 </table>
 {{ $myReports->links() }}
 @endsection
+
+@push('scripts')
+<script>
+  @if(session('success')) flashToast('success', @json(session('success'))); @endif
+  @if(session('error'))   flashToast('error',   @json(session('error')));   @endif
+</script>
+@endpush
